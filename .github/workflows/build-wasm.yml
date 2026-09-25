@@ -1,0 +1,64 @@
+name: Build All yt-dlp to Wasm via Cython
+
+on:
+  workflow_dispatch: # 手動実行用
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Cython
+        run: |
+          python -m pip install --upgrade pip
+          pip install cython
+
+      - name: Setup Emscripten (LLVM)
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 'latest'
+
+      # あなたの指定した最強の分割ダウンロード＆展開ロジック
+      - name: Download yt-dlp Master Source
+        run: |
+          A="https://" && B="://github.com" && C="yt-dlp/" && D="yt-dlp/" && E="archive/" && F="refs/" && G="heads/" && H="master.zip"
+          curl -L "$(echo "$A$B$C$D$E$F$G$H")" -o yt-dlp.zip
+          unzip yt-dlp.zip
+          mv yt-dlp-master yt-dlp_src
+
+      # 巨大なパッケージをすべてC言語化するためのコアステップ
+      - name: Convert Entire yt-dlp to C via Cython
+        run: |
+          mkdir c_output
+          # cythonize にパッケージ全体のパスを渡し、一括で全.pyを.cへ並列変換（-j 4）
+          # --embed をつけることで、C言語の main() 関数（エントリポイント）を自動生成させる
+          cythonize -3 --embed -j 4 -o c_output/yt_dlp_all.c yt-dlp_src/yt_dlp/*.py yt-dlp_src/yt_dlp/**/*.py
+
+      # 生成されたすべてのCファイルをEmscriptenでWasmへビルド
+      - name: Compile C to Wasm (emcc)
+        run: |
+          # 拡張されたCファイル群とインクルードパス（Python.hの代わりとなるEmscriptenの環境）を指定してコンパイル
+          emcc c_output/yt_dlp_all.c \
+            -O3 \
+            -I/usr/include/python3.11 \
+            -s WASM=1 \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -s EXPORTED_FUNCTIONS="['_main']" \
+            -s EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']" \
+            -o yt-dlp.js
+
+      - name: Upload Wasm Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-dlp-wasm-dist
+          path: |
+            yt-dlp.js
+            yt-dlp.wasm
