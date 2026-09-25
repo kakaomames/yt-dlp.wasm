@@ -35,12 +35,34 @@ jobs:
           mv yt-dlp-master yt-dlp_src
 
       # 巨大なパッケージをすべてC言語化するためのコアステップ
+            # cythonizeをPythonAPIから呼び出し、__main__.pyにembedオプションを効かせてC化
       - name: Convert Entire yt-dlp to C via Cython
         run: |
+          python -c "
+          import os
+          import glob
+          from Cython.Build import cythonize
+          from Cython.Compiler import Options
+
+          # Cのmain関数を生成するためのオプションを強制ON
+          Options.embed = 'main'
+
+          # yt_dlp以下のすべての.pyファイルをリストアップ
+          py_files = glob.glob('yt-dlp_src/yt_dlp/**/*.py', recursive=True) + glob.glob('yt-dlp_src/yt_dlp/*.py')
+          
+          # 重複を排除してファイルを確定
+          py_files = list(set([f for f in py_files if os.path.isfile(f)]))
+          print(f'Compiling {len(py_files)} files...')
+
+          # cythonizeを実行してCソース群を生成
+          # nthreads=4 で並列処理、compiler_directivesでPython3モードを指定
+          cythonize(py_files, nthreads=4, compiler_directives={'language_level': '3'})
+          "
+          
+          # emccでビルドしやすいように生成されたCファイルを1箇所（c_output）に集約する
           mkdir c_output
-          # cythonize にパッケージ全体のパスを渡し、一括で全.pyを.cへ並列変換（-j 4）
-          # --embed をつけることで、C言語の main() 関数（エントリポイント）を自動生成させる
-          cythonize -3 --embed -j 4 -o c_output/yt_dlp_all.c yt-dlp_src/yt_dlp/*.py yt-dlp_src/yt_dlp/**/*.py
+          find yt-dlp_src/yt_dlp/ -name "*.c" -exec mv {} c_output/ \;
+
 
       # 生成されたすべてのCファイルをEmscriptenでWasmへビルド
       - name: Compile C to Wasm (emcc)
