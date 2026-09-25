@@ -29,7 +29,7 @@ jobs:
       # あなたの指定した最強の分割ダウンロード＆展開ロジック
       - name: Download yt-dlp Master Source
         run: |
-          A="https://" && B="://github.com" && C="yt-dlp/" && D="yt-dlp/" && E="archive/" && F="refs/" && G="heads/" && H="master.zip"
+          A="https://" && B="github.com/" && C="yt-dlp/" && D="yt-dlp/" && E="archive/" && F="refs/" && G="heads/" && H="master.zip"
           curl -L "$(echo "$A$B$C$D$E$F$G$H")" -o yt-dlp.zip
           unzip yt-dlp.zip
           mv yt-dlp-master yt-dlp_src
