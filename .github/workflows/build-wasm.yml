@@ -19,14 +19,14 @@ jobs:
       - name: Install Cython
         run: |
           python -m pip install --upgrade pip
-          pip install cython | true
-          pip install certifi | true
-          pip install brotli | true
-          pip install brotlicffi | true
-          pip install websockets | true
-          pip install requests | true
-          pip install pycryptodomex | true
-          pip install mutagen | true
+          pip install cython || true
+          pip install certifi || true
+          pip install brotli || true
+          pip install brotlicffi || true
+          pip install websockets || true
+          pip install requests || true
+          pip install pycryptodomex || true
+          pip install mutagen || true
 
       - name: Setup Emscripten (LLVM)
         uses: mymindstorm/setup-emsdk@v14
