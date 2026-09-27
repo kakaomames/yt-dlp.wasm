@@ -29,7 +29,10 @@ jobs:
           pip install mutagen || true
           sudo apt update
           sudo apt install ffmpeg
-          curl -fsSL https://deno.land/install.sh | sh
+          # 事前にunzipをインストールしておく
+          sudo apt install unzip
+          # denoをインストールする
+          curl -fsSL https://deno.land/x/install/install.sh | sh
           export DENO_INSTALL="$HOME/.deno"
           export PATH="$DENO_INSTALL/bin:$PATH"
           deno --version || true
