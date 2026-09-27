@@ -27,6 +27,14 @@ jobs:
           pip install requests || true
           pip install pycryptodomex || true
           pip install mutagen || true
+          sudo apt update
+          sudo apt install ffmpeg
+          curl -fsSL https://deno.land/install.sh | sh
+          export DENO_INSTALL="$HOME/.deno"
+          export PATH="$DENO_INSTALL/bin:$PATH"
+          deno --version || true
+          python --version || true
+          ffmpeg --version || true
 
       - name: Setup Emscripten (LLVM)
         uses: mymindstorm/setup-emsdk@v14
